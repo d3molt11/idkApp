@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow - AI-Powered Focus</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(145deg, #0d1b2a, #1b263b, #0f172a);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .phone {
+            width: 375px;
+            height: 812px;
+            background: linear-gradient(145deg, #1e2938, #0f1419);
+            border-radius: 40px;
+            padding: 4px;
+            box-shadow: 
+                0 30px 80px rgba(0, 123, 255, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #0d1b2a 0%, #1b263b 50%, #0f172a 100%);
+            border-radius: 36px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            z-index: 100;
+            position: relative;
+        }
+
+        .signal-bars {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+
+        .bar {
+            width: 3px;
+            background: #00ff88;
+            border-radius: 1px;
+        }
+
+        .bar:nth-child(1) { height: 4px; }
+        .bar:nth-child(2) { height: 6px; }
+        .bar:nth-child(3) { height: 8px; }
+        .bar:nth-child(4) { height: 10px; }
+
+        /* Screen Container */
+        .app-screen {
+            display: none;
+            height: calc(100% - 50px);
+            padding: 0 24px 90px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .app-screen.active {
+            display: block;
+        }
+
+        /* Home Screen */
+        .home-header {
+            text-align: center;
+            margin: 30px 0 40px;
+        }
+
+        .app-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #007bff, #00d4ff);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: logoGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes logoGlow {
+            from { box-shadow: 0 0 30px rgba(0, 212, 255, 0.3); }
+            to { box-shadow: 0 0 50px rgba(0, 212, 255, 0.6); }
+        }
+
+        .app-logo::before {
+            content: '';
+            width: 30px;
+            height: 4px;
+            background: white;
+            border-radius: 2px;
+            transform: rotate(-30deg);
+        }
+
+        .app-title {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(45deg, #00d4ff, #007bff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .app-subtitle {
+            font-size: 16px;
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 20px;
+            padding: 20px 16px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .feature-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 212, 255, 0.4);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.1);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00d4ff, transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .feature-description {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+
+        /* AI Distraction Radar Screen */
+        .radar-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .radar-display {
+            width: 280px;
+            height: 280px;
+            margin: 30px auto;
+            position: relative;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, rgba(0, 123, 255, 0.05) 50%, transparent 100%);
+            border-radius: 50%;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .radar-sweep {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 140px;
+            background: linear-gradient(to bottom, #00d4ff, transparent);
+            transform-origin: bottom center;
+            transform: translate(-50%, -100%) rotate(0deg);
+            animation: radarSweep 3s linear infinite;
+        }
+
+        @keyframes radarSweep {
+            from { transform: translate(-50%, -100%) rotate(0deg); }
+            to { transform: translate(-50%, -100%) rotate(360deg); }
+        }
+
+        .threat-dots {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .threat {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #ff4444;
+            border-radius: 50%;
+            animation: threatPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes threatPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+            50% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+        }
+
+        .blocked-apps {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .blocked-app {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .blocked-app::after {
+            content: '🚫';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 16px;
+            animation: blockAnim 2s ease-in-out infinite;
+        }
+
+        @keyframes blockAnim {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.2) rotate(10deg); }
+        }
+
+        /* Adaptive Focus Environment */
+        .environment-view {
+            height: 200px;
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 30%, #166534 70%, #15803d 100%);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            margin: 30px 0;
+        }
+
+        .environment-elements {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 0 20px;
+        }
+
+        .plant, .building, .tree {
+            border-radius: 4px 4px 0 0;
+            transition: height 0.5s ease;
+        }
+
+        .plant {
+            width: 20px;
+            background: linear-gradient(to top, #16a34a, #22c55e);
+            animation: grow 4s ease-out infinite alternate;
+        }
+
+        .building {
+            width: 25px;
+            background: linear-gradient(to top, #334155, #64748b, #00d4ff);
+            animation: grow 4s ease-out infinite alternate;
+            animation-delay: -1s;
+        }
+
+        .tree {
+            width: 30px;
+            background: linear-gradient(to top, #a3a3a3, #16a34a);
+            animation: grow 4s ease-out infinite alternate;
+            animation-delay: -2s;
+        }
+
+        @keyframes grow {
+            0% { height: 20px; }
+            100% { height: 80px; }
+        }
+
+        .progress-indicator {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            height: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff, #007bff);
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            animation: progressFlow 3s ease-in-out infinite;
+        }
+
+        @keyframes progressFlow {
+            0%, 100% { width: 65%; }
+            50% { width: 75%; }
+        }
+
+        /* Peer Focus Rooms */
+        .focus-room {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 24px;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .room-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .room-timer {
+            background: linear-gradient(45deg, #00d4ff, #007bff);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            animation: timerPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .peer-avatars {
+            display: flex;
+            gap: 12px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #00d4ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: relative;
+            animation: avatarGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes avatarGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4); }
+            50% { box-shadow: 0 0 0 4px rgba(0, 212, 255, 0); }
+        }
+
+        .streak-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #fbbf24;
+            color: #000;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .leaderboard {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            color: #000;
+            font-weight: 700;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Smart Calendar */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin: 20px 0;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .calendar-day.today {
+            background: linear-gradient(45deg, #00d4ff, #007bff);
+            color: white;
+        }
+
+        .calendar-day.task {
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid #00d4ff;
+        }
+
+        .calendar-day.urgent {
+            background: rgba(255, 68, 68, 0.3);
+            border: 1px solid #ff4444;
+            animation: urgentBlink 2s ease-in-out infinite;
+        }
+
+        @keyframes urgentBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .task-list {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-priority {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .task-priority.high { background: #ff4444; }
+        .task-priority.medium { background: #fbbf24; }
+        .task-priority.low { background: #22c55e; }
+
+        /* Music Visualizer */
+        .music-visualizer {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 3px;
+            height: 40px;
+            margin: 20px 0;
+        }
+
+        .music-bar {
+            width: 4px;
+            background: linear-gradient(to top, #007bff, #00d4ff);
+            border-radius: 2px;
+            animation: musicBounce 1.5s ease-in-out infinite;
+        }
+
+        .music-bar:nth-child(1) { animation-delay: 0s; }
+        .music-bar:nth-child(2) { animation-delay: 0.1s; }
+        .music-bar:nth-child(3) { animation-delay: 0.2s; }
+        .music-bar:nth-child(4) { animation-delay: 0.3s; }
+        .music-bar:nth-child(5) { animation-delay: 0.4s; }
+        .music-bar:nth-child(6) { animation-delay: 0.2s; }
+        .music-bar:nth-child(7) { animation-delay: 0.1s; }
+
+        @keyframes musicBounce {
+            0%, 100% { height: 8px; }
+            50% { height: 30px; }
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 16px 0 28px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 12px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(0, 212, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .nav-icon {
+            font-size: 22px;
+            opacity: 0.7;
+        }
+
+        .nav-item.active .nav-icon {
+            opacity: 1;
+            color: #00d4ff;
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 500;
+            opacity: 0.7;
+            color: #94a3b8;
+        }
+
+        .nav-item.active .nav-label {
+            opacity: 1;
+            color: #00d4ff;
+        }
+
+        /* Floating particles */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00d4ff;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: particleFloat 8s linear infinite;
+        }
+
+        @keyframes particleFloat {
+            from {
+                transform: translateY(100vh) translateX(0) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.6;
+                transform: scale(1);
+            }
+            90% {
+                opacity: 0.6;
+            }
+            to {
+                transform: translateY(-100px) translateX(50px) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Reward badges */
+        .badge {
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            color: #000;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 4px;
+            animation: badgeShine 3s ease-in-out infinite;
+        }
+
+        @keyframes badgeShine {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+        }
+
+        /* Screen Headers */
+        .screen-header {
+            text-align: center;
+            padding: 30px 0 20px;
+        }
+
+        .screen-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .screen-subtitle {
+            font-size: 16px;
+            color: #64748b;
+        }
+
+        /* Additional styles for better mobile experience */
+        .challenge-card {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .ai-recommendation {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 16px;
+            border-radius: 16px;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .flex-center {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .text-blue { color: #00d4ff; }
+        .text-green { color: #22c55e; }
+        .text-yellow { color: #fbbf24; }
+        .text-red { color: #ff4444; }
+        .text-gray { color: #64748b; }
+
+        .font-semibold { font-weight: 600; }
+        .font-bold { font-weight: 700; }
+        .text-sm { font-size: 14px; }
+        .text-xs { font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="screen">
+            <!-- Floating Particles -->
+            <div class="particles" id="particles"></div>
+            
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span class="time">9:41</span>
+                <div class="signal-bars">
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <span style="margin-left: 8px; font-size: 14px;">🔋 92%</span>
+                </div>
+            </div>
+
+            <!-- Home Screen -->
+            <div class="app-screen active" id="home">
+                <div class="home-header">
+                    <div class="app-logo"></div>
+                    <h1 class="app-title">FocusFlow</h1>
+                    <p class="app-subtitle">AI-Powered Focus for Students</p>
+                </div>
+
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <div class="stat-number">4.2h</div>
+                        <div class="stat-label">Today</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">17</div>
+                        <div class="stat-label">Streak</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">89%</div>
+                        <div class="stat-label">Focus</div>
+                    </div>
+                </div>
+
+                <div class="feature-cards">
+                    <div class="feature-card" onclick="switchScreen('radar')">
+                        <div class="feature-header">
+                            <div class="feature-icon" style="background: linear-gradient(45deg, #007bff, #00d4ff);">🛡️</div>
+                            <div>
+                                <div class="feature-title">AI Distraction Radar</div>
+                                <div class="feature-description">Real-time protection from social media & notifications</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" onclick="switchScreen('environment')">
+                        <div class="feature-header">
+                            <div class="feature-icon" style="background: linear-gradient(45deg, #22c55e, #16a34a);">🌱</div>
+                            <div>
+                                <div class="feature-title">Adaptive Environment</div>
+                                <div class="feature-description">Your focus grows beautiful virtual worlds</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" onclick="switchScreen('rooms')">
+                        <div class="feature-header">
+                            <div class="feature-icon" style="background: linear-gradient(45deg, #f59e0b, #fbbf24);">👥</div>
+                            <div>
+                                <div class="feature-title">Peer Focus Rooms</div>
+                                <div class="feature-description">Study together in gamified focus challenges</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" onclick="switchScreen('calendar')">
+                        <div class="feature-header">
+                            <div class="feature-icon" style="background: linear-gradient(45deg, #8b5cf6, #a855f7);">📅</div>
+                            <div>
+                                <div class="feature-title">Smart Calendar</div>
+                                <div class="feature-description">AI-powered task prioritization & scheduling</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="music-visualizer">
+                    <div class="music-bar"></div>
+                    <div class="music-bar"></div>
+                    <div class="music-bar"></div>
+                    <div class="music-bar"></div>
+                    <div class="music-bar"></div>
+                    <div class="music-bar"></div>
+                    <div class="music-bar"></div>
+                </div>
+                <p style="text-align: center; color: #64748b; font-size: 14px;">🎵 Ambient Focus Sounds Active</p>
+            </div>
+
+            <!-- AI Distraction Radar -->
+            <div class="app-screen" id="radar">
+                <div class="screen-header">
+                    <h2 class="screen-title">AI Distraction Radar</h2>
+                    <p class="screen-subtitle">Real-time protection shield active</p>
+                </div>
+
+                <div class="radar-container">
+                    <div class="radar-display">
+                        <div class="radar-sweep"></div>
+                        <div class="threat-dots">
+                            <div class="threat" style="top: 30%; left: 25%;"></div>
+                            <div class="threat" style="top: 60%; right: 20%;"></div>
+                            <div class="threat" style="bottom: 40%; left: 40%;"></div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-blue font-semibold" style="margin: 20px 0;">🛡️ Shield Status: ACTIVE</p>
+                    
+                    <div class="blocked-apps">
+                        <div class="blocked-app" style="background: #ff4757;">📱</div>
+                        <div class="blocked-app" style="background: #1e90ff;">📘</div>
+                        <div class="blocked-app" style="background: #ff6b7a;">📷</div>
+                        <div class="blocked-app" style="background: #25d366;">💬</div>
+                        <div class="blocked-app" style="background: #ff4500;">🎵</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" style="margin: 20px 0;">
+                    <div class="flex-between">
+                        <div>
+                            <div class="text-red" style="font-size: 24px; font-weight: 700;">47</div>
+                            <div class="text-gray text-sm">Distractions Blocked Today</div>
+                        </div>
+                        <div>
+                            <div class="text-blue" style="font-size: 24px; font-weight: 700;">3.2h</div>
+                            <div class="text-gray text-sm">Time Saved</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="badge">🏆 Distraction Destroyer</div>
+                <div class="badge">🛡️ Digital Guardian</div>
+            </div>
+
+            <!-- Adaptive Focus Environment -->
+            <div class="app-screen" id="environment">
+                <div class="screen-header">
+                    <h2 class="screen-title">Adaptive Environment</h2>
+                    <p class="screen-subtitle">Your focus shapes this world</p>
+                </div>
+
+                <div class="environment-view">
+                    <div class="environment-elements">
+                        <div class="plant"></div>
+                        <div class="building"></div>
+                        <div class="tree"></div>
+                        <div class="plant"></div>
+                        <div class="building"></div>
+                        <div class="tree"></div>
+                    </div>
+                </div>
+
+                <div class="progress-indicator">
+                    <div class="progress-bar"></div>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0;">
+                    <div class="text-blue" style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Focus Level: Deep</div>
+                    <div class="text-gray text-sm">Environment evolution: 73% complete</div>
+                </div>
+
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <div class="stat-number">🌱</div>
+                        <div class="stat-label">Plants Grown</div>
+                        <div class="text-green" style="font-size: 18px; font-weight: 600;">12</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">🏢</div>
+                        <div class="stat-label">Buildings Built</div>
+                        <div class="text-blue" style="font-size: 18px; font-weight: 600;">8</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">🌳</div>
+                        <div class="stat-label">Trees Planted</div>
+                        <div class="text-green" style="font-size: 18px; font-weight: 600;">15</div>
+                    </div>
+                </div>
+
+                <div class="badge">🌍 World Builder</div>
+                <div class="badge">🎨 Environmental Artist</div>
+                <div class="badge">⭐ Focus Architect</div>
+            </div>
+
+            <!-- Peer Focus Rooms -->
+            <div class="app-screen" id="rooms">
+                <div class="screen-header">
+                    <h2 class="screen-title">Focus Rooms</h2>
+                    <p class="screen-subtitle">Study together, achieve more</p>
+                </div>
+
+                <div class="focus-room">
+                    <div class="room-header">
+                        <div class="room-name">📚 Deep Study Session</div>
+                        <div class="room-timer">25:43</div>
+                    </div>
+                    
+                    <div class="peer-avatars">
+                        <div class="avatar" style="background: linear-gradient(45deg, #ff6b7a, #ff4757);">
+                            😊
+                            <div class="streak-badge">7</div>
+                        </div>
+                        <div class="avatar" style="background: linear-gradient(45deg, #00d4ff, #007bff);">
+                            🤓
+                            <div class="streak-badge">12</div>
+                        </div>
+                        <div class="avatar" style="background: linear-gradient(45deg, #22c55e, #16a34a);">
+                            😌
+                            <div class="streak-badge">5</div>
+                        </div>
+                        <div class="avatar" style="background: linear-gradient(45deg, #fbbf24, #f59e0b);">
+                            🎯
+                            <div class="streak-badge">9</div>
+                        </div>
+                    </div>
+                    
+                    <div class="challenge-card">
+                        <div class="text-blue font-semibold" style="margin-bottom: 8px;">Room Challenge: Math Marathon 🧮</div>
+                        <div class="text-gray text-sm">Complete 50 problems together • Reward: 500 XP</div>
+                    </div>
+                </div>
+
+                <div class="focus-room">
+                    <div class="room-header">
+                        <div class="room-name">🎨 Creative Writing</div>
+                        <div class="room-timer">18:27</div>
+                    </div>
+                    
+                    <div class="peer-avatars">
+                        <div class="avatar" style="background: linear-gradient(45deg, #8b5cf6, #a855f7);">
+                            ✍️
+                            <div class="streak-badge">15</div>
+                        </div>
+                        <div class="avatar" style="background: linear-gradient(45deg, #f59e0b, #fbbf24);">
+                            📖
+                            <div class="streak-badge">3</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="leaderboard">
+                    <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 16px; text-align: center;">🏆 Weekly Leaderboard</h3>
+                    
+                    <div class="leaderboard-item">
+                        <div class="flex-center">
+                            <div class="rank">1</div>
+                            <div>
+                                <div class="font-semibold">Alex Chen</div>
+                                <div class="text-xs text-gray">127 focus hours</div>
+                            </div>
+                        </div>
+                        <div class="text-yellow font-semibold">2,847 XP</div>
+                    </div>
+                    
+                    <div class="leaderboard-item">
+                        <div class="flex-center">
+                            <div class="rank" style="background: linear-gradient(45deg, #94a3b8, #64748b);">2</div>
+                            <div>
+                                <div class="font-semibold">Sarah Kim</div>
+                                <div class="text-xs text-gray">119 focus hours</div>
+                            </div>
+                        </div>
+                        <div class="text-gray font-semibold">2,693 XP</div>
+                    </div>
+                    
+                    <div class="leaderboard-item">
+                        <div class="flex-center">
+                            <div class="rank" style="background: linear-gradient(45deg, #f97316, #ea580c);">3</div>
+                            <div>
+                                <div class="font-semibold text-blue">You</div>
+                                <div class="text-xs text-gray">98 focus hours</div>
+                            </div>
+                        </div>
+                        <div class="text-blue font-semibold">2,156 XP</div>
+                    </div>
+                </div>
+
+                <div class="badge">🔥 Focus Streak Master</div>
+                <div class="badge">👑 Room Champion</div>
+            </div>
+
+            <!-- Smart Calendar -->
+            <div class="app-screen" id="calendar">
+                <div class="screen-header">
+                    <h2 class="screen-title">Smart Calendar</h2>
+                    <p class="screen-subtitle">AI-optimized scheduling</p>
+                </div>
+
+                <div class="calendar-grid">
+                    <div class="calendar-day text-gray text-xs">S</div>
+                    <div class="calendar-day text-gray text-xs">M</div>
+                    <div class="calendar-day text-gray text-xs">T</div>
+                    <div class="calendar-day text-gray text-xs">W</div>
+                    <div class="calendar-day text-gray text-xs">T</div>
+                    <div class="calendar-day text-gray text-xs">F</div>
+                    <div class="calendar-day text-gray text-xs">S</div>
+                    
+                    <div class="calendar-day">1</div>
+                    <div class="calendar-day">2</div>
+                    <div class="calendar-day">3</div>
+                    <div class="calendar-day">4</div>
+                    <div class="calendar-day task">5</div>
+                    <div class="calendar-day">6</div>
+                    <div class="calendar-day">7</div>
+                    
+                    <div class="calendar-day">8</div>
+                    <div class="calendar-day urgent">9</div>
+                    <div class="calendar-day">10</div>
+                    <div class="calendar-day">11</div>
+                    <div class="calendar-day task">12</div>
+                    <div class="calendar-day today">13</div>
+                    <div class="calendar-day">14</div>
+                    
+                    <div class="calendar-day urgent">15</div>
+                    <div class="calendar-day">16</div>
+                    <div class="calendar-day task">17</div>
+                    <div class="calendar-day">18</div>
+                    <div class="calendar-day">19</div>
+                    <div class="calendar-day task">20</div>
+                    <div class="calendar-day">21</div>
+                </div>
+
+                <div class="ai-recommendation">
+                    <div class="flex-center" style="margin-bottom: 8px;">
+                        <span style="font-size: 20px;">🤖</span>
+                        <span class="text-blue font-semibold">AI Recommendation</span>
+                    </div>
+                    <div style="color: #ffffff; font-size: 14px; margin-bottom: 4px;">Optimal focus time: 2:00 PM - 4:30 PM</div>
+                    <div class="text-gray text-xs">Based on your productivity patterns and energy levels</div>
+                </div>
+
+                <div class="task-list">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">📋 Today's Tasks</h3>
+                    
+                    <div class="task-item">
+                        <div class="task-priority high"></div>
+                        <div style="flex: 1;">
+                            <div class="font-medium">Math Assignment Ch. 7</div>
+                            <div class="text-xs text-gray">Due tomorrow • 2h estimated</div>
+                        </div>
+                        <div class="text-red text-xs font-semibold">URGENT</div>
+                    </div>
+                    
+                    <div class="task-item">
+                        <div class="task-priority medium"></div>
+                        <div style="flex: 1;">
+                            <div class="font-medium">History Essay Research</div>
+                            <div class="text-xs text-gray">Due Friday • 3h estimated</div>
+                        </div>
+                        <div class="text-yellow text-xs font-semibold">MEDIUM</div>
+                    </div>
+                    
+                    <div class="task-item">
+                        <div class="task-priority low"></div>
+                        <div style="flex: 1;">
+                            <div class="font-medium">Science Lab Report</div>
+                            <div class="text-xs text-gray">Due next week • 1.5h estimated</div>
+                        </div>
+                        <div class="text-green text-xs font-semibold">LOW</div>
+                    </div>
+                </div>
+
+                <div class="progress-indicator">
+                    <div class="progress-bar" style="width: 40%;"></div>
+                </div>
+                <div style="text-align: center; color: #64748b; font-size: 14px; margin-top: 8px;">Daily Progress: 40% Complete</div>
+
+                <div class="badge">⚡ Productivity Master</div>
+                <div class="badge">🎯 Task Crusher</div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div class="bottom-nav">
+                <div class="nav-item active" onclick="switchScreen('home')">
+                    <div class="nav-icon">🏠</div>
+                    <div class="nav-label">Home</div>
+                </div>
+                <div class="nav-item" onclick="switchScreen('radar')">
+                    <div class="nav-icon">🛡️</div>
+                    <div class="nav-label">Radar</div>
+                </div>
+                <div class="nav-item" onclick="switchScreen('environment')">
+                    <div class="nav-icon">🌱</div>
+                    <div class="nav-label">World</div>
+                </div>
+                <div class="nav-item" onclick="switchScreen('rooms')">
+                    <div class="nav-item" onclick="switchScreen('calendar')">
+                    <div class="nav-icon">📅</div>
+                    <div class="nav-label">Calendar</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create floating particles
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = 20;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 8 + 's';
+                particle.style.animationDuration = (6 + Math.random() * 4) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        // Screen switching functionality
+        function switchScreen(screenName) {
+            // Hide all screens
+            document.querySelectorAll('.app-screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected screen
+            document.getElementById(screenName).classList.add('active');
+            
+            // Add active class to corresponding nav item
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                if (item.onclick && item.onclick.toString().includes(screenName)) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Add subtle screen transition effect
+            const activeScreen = document.getElementById(screenName);
+            activeScreen.style.opacity = '0';
+            activeScreen.style.transform = 'translateX(20px)';
+            
+            setTimeout(() => {
+                activeScreen.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                activeScreen.style.opacity = '1';
+                activeScreen.style.transform = 'translateX(0)';
+            }, 50);
+        }
+
+        // Update time in status bar
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: false 
+            });
+            document.querySelector('.time').textContent = time;
+        }
+
+        // Simulate dynamic data updates
+        function simulateDataUpdates() {
+            // Update stats randomly
+            setInterval(() => {
+                const statNumbers = document.querySelectorAll('.stat-number');
+                statNumbers.forEach(stat => {
+                    if (Math.random() > 0.98 && !isNaN(parseFloat(stat.textContent))) {
+                        const currentValue = parseFloat(stat.textContent);
+                        stat.textContent = (currentValue + Math.random() * 0.1).toFixed(1) + 'h';
+                    }
+                });
+            }, 3000);
+
+            // Update timer displays
+            setInterval(() => {
+                const timers = document.querySelectorAll('.room-timer');
+                timers.forEach(timer => {
+                    const timeText = timer.textContent;
+                    const [minutes, seconds] = timeText.split(':').map(Number);
+                    let totalSeconds = minutes * 60 + seconds - 1;
+                    
+                    if (totalSeconds < 0) totalSeconds = 25 * 60; // Reset to 25 minutes
+                    
+                    const newMinutes = Math.floor(totalSeconds / 60);
+                    const newSeconds = totalSeconds % 60;
+                    timer.textContent = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
+                });
+            }, 1000);
+        }
+
+        // Add touch interactions
+        function addTouchInteractions() {
+            document.addEventListener('touchstart', function(e) {
+                const target = e.target.closest('.feature-card, .nav-item, .focus-room, .calendar-day');
+                if (target) {
+                    target.style.transform = 'scale(0.98)';
+                    target.style.transition = 'transform 0.1s ease';
+                }
+            });
+
+            document.addEventListener('touchend', function(e) {
+                const target = e.target.closest('.feature-card, .nav-item, .focus-room, .calendar-day');
+                if (target) {
+                    setTimeout(() => {
+                        target.style.transform = '';
+                    }, 100);
+                }
+            });
+        }
+
+        // Add dynamic threat detection animation
+        function animateThreats() {
+            const threats = document.querySelectorAll('.threat');
+            threats.forEach((threat, index) => {
+                setInterval(() => {
+                    const newTop = Math.random() * 70 + 15;
+                    const newLeft = Math.random() * 70 + 15;
+                    threat.style.top = newTop + '%';
+                    threat.style.left = newLeft + '%';
+                }, 4000 + index * 1000);
+            });
+        }
+
+        // Add environment growth simulation
+        function simulateEnvironmentGrowth() {
+            const elements = document.querySelectorAll('.plant, .building, .tree');
+            setInterval(() => {
+                elements.forEach(element => {
+                    const randomGrowth = Math.random() * 20 + 60;
+                    element.style.height = randomGrowth + 'px';
+                });
+            }, 5000);
+        }
+
+        // Initialize app
+        function initializeApp() {
+            createParticles();
+            updateTime();
+            setInterval(updateTime, 1000);
+            simulateDataUpdates();
+            addTouchInteractions();
+            animateThreats();
+            simulateEnvironmentGrowth();
+            
+            console.log('🚀 FocusFlow AI App Initialized');
+        }
+
+        // Start the app
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        // Add keyboard navigation for demo purposes
+        document.addEventListener('keydown', (e) => {
+            const screens = ['home', 'radar', 'environment', 'rooms', 'calendar'];
+            const currentIndex = screens.findIndex(screen => 
+                document.getElementById(screen).classList.contains('active')
+            );
+            
+            if (e.key === 'ArrowRight') {
+                const nextIndex = (currentIndex + 1) % screens.length;
+                switchScreen(screens[nextIndex]);
+            } else if (e.key === 'ArrowLeft') {
+                const prevIndex = (currentIndex - 1 + screens.length) % screens.length;
+                switchScreen(screens[prevIndex]);
+            }
+        });
+    </script>
+</body>
+</html>
